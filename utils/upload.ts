@@ -25,6 +25,7 @@ const compressionOptions = {
   maxWidthOrHeight: 1024,
   useWebWorker: true,
   initialQuality: 0.85,
+  libURL: 'scripts/browser-image-compression.js',
 }
 
 export async function fileUpload({

@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
-import type { InlineDataPart, ModelParams, Tool, ToolConfig, Part } from '@google/generative-ai'
+import type { InlineDataPart, ModelParams, Tool, ToolConfig, Part, SafetySetting } from '@google/generative-ai'
 import { getVisionPrompt, getFunctionCallPrompt } from '@/utils/prompt'
 import { OldVisionModel } from '@/constant/model'
 import { isUndefined } from 'lodash-es'
@@ -19,6 +19,11 @@ export type RequestProps = {
     maxOutputTokens: number
   }
   safety: string
+}
+
+export type NewModelParams = ModelParams & {
+  tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }>
+  safetySettings?: SafetySetting[] & Array<{ category: string; threshold: string }>
 }
 
 export function getSafetySettings(level: string) {
@@ -62,7 +67,7 @@ export default async function chat({
   safety,
 }: RequestProps) {
   const genAI = new GoogleGenerativeAI(apiKey)
-  const modelParams: ModelParams & { tools?: Array<Tool | { googleSearch: {} } | { codeExecution: {} }> } = {
+  const modelParams: NewModelParams = {
     model,
     generationConfig,
     safetySettings: getSafetySettings(safety),
@@ -92,10 +97,25 @@ export default async function chat({
   }
   if (model === 'gemini-2.0-flash-exp') {
     const officialPlugins = [{ googleSearch: {} }]
-    if (tools) {
-      modelParams.tools = [...officialPlugins, ...tools]
-    } else {
+    if (!tools) {
       modelParams.tools = officialPlugins
+    }
+  }
+  if (model.startsWith('gemini-2.0-flash-exp') || model.startsWith('gemini-exp')) {
+    if (modelParams.safetySettings) {
+      const safetySettings: NewModelParams['safetySettings'] = []
+      modelParams.safetySettings.forEach((item) => {
+        if (safety === 'none') {
+          safetySettings.push({ category: item.category, threshold: 'OFF' })
+        } else {
+          safetySettings.push(item)
+        }
+      })
+      safetySettings.push({
+        category: 'HARM_CATEGORY_CIVIC_INTEGRITY',
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      })
+      modelParams.safetySettings = safetySettings
     }
   }
   const geminiModel = genAI.getGenerativeModel(modelParams, { baseUrl })

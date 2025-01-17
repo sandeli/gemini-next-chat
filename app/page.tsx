@@ -221,17 +221,29 @@ export default function Home() {
           if (stopGeneratingRef.current) return
 
           if (chunk.candidates) {
-            chunk.candidates.forEach((item) => {
+            const candidates: any[] = chunk.candidates
+            candidates.forEach((item) => {
               if (item.content.parts) {
-                const textParts = item.content.parts.filter((item) => !isUndefined(item.text))
-                if (thinking && textParts.length === 2) {
-                  if (textParts[0].text) {
-                    thoughtWriter.write(textParts[0].text)
+                if (thinking) {
+                  const textParts = item.content.parts.filter((item: any) => !isUndefined(item.text))
+                  if (textParts.length === 2) {
+                    if (textParts[0].text) {
+                      thoughtWriter.write(textParts[0].text)
+                    }
+                    if (textParts[1].text) {
+                      thinking = false
+                      writer.write(textParts[1].text)
+                    }
+                  } else {
+                    for (const textPart of item.content.parts) {
+                      if (textPart.thought) {
+                        thoughtWriter.write(textPart.text)
+                      } else {
+                        thinking = false
+                        writer.write(textPart.text)
+                      }
+                    }
                   }
-                  if (textParts[1].text) {
-                    writer.write(textParts[1].text)
-                  }
-                  thinking = false
                 } else {
                   const text = chunk.text()
                   if (thinking) {
@@ -327,10 +339,16 @@ export default function Home() {
               role: 'model',
               parts: thoughtText !== '' ? [{ text: thoughtText }, { text }] : [{ text }],
             })
-            setMessage('')
-            setThinkingMessage('')
-            scrollToBottom()
+          } else if (thoughtText !== '') {
+            addMessage({
+              id: nanoid(),
+              role: 'model',
+              parts: [{ text: thoughtText }],
+            })
           }
+          setMessage('')
+          setThinkingMessage('')
+          scrollToBottom()
           setIsThinking(false)
           stopGeneratingRef.current = false
           setExecutingPlugins([])

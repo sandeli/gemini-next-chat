@@ -10,10 +10,11 @@ const geminiApiBaseUrl = process.env.GEMINI_API_BASE_URL as string
 export async function POST(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const model = searchParams.get('model')
+  const version = model?.includes('-thinking') ? 'v1alpha' : 'v1beta'
 
   try {
     const response = await fetch(
-      `${geminiApiBaseUrl || 'https://generativelanguage.googleapis.com'}/v1beta/models/${model}?alt=sse`,
+      `${geminiApiBaseUrl || 'https://generativelanguage.googleapis.com'}/${version}/models/${model}?alt=sse`,
       {
         method: req.method,
         headers: {
