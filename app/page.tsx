@@ -235,7 +235,7 @@ export default function Home() {
                       writer.write(textParts[1].text)
                     }
                   } else {
-                    for (const textPart of item.content.parts) {
+                    for (const textPart of textParts) {
                       if (textPart.thought) {
                         thoughtWriter.write(textPart.text)
                       } else {

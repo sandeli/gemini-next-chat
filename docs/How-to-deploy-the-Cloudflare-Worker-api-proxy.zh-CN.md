@@ -3,7 +3,7 @@
 使用 Cloudflare 仪表板创建您的第一个 Worker：
 
 1. 登录 Cloudflare 仪表板并选择您的帐户。
-2. 选择 Workers 和 Pages > 创建应用程序。
+2. 选择 Compute(Workers) > 创建应用程序。
 3. 选择 创建 Worker > 部署。
 
 ### Worker 脚本

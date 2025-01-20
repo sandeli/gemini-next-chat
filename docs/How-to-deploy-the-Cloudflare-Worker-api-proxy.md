@@ -3,7 +3,7 @@
 To create your first Worker using the Cloudflare dashboard:
 
 1. Log in to the Cloudflare dashboard and select your account.
-2. Select Workers & Pages > Create application.
+2. Select Compute(Workers) > Create application.
 3. Select Create Worker > Deploy.
 
 ### Worker Scripts

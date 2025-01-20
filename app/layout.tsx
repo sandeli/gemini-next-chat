@@ -77,7 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <StoreProvider>
             <I18Provider>
-              <SidebarProvider defaultOpen={false}>
+              <SidebarProvider defaultOpen>
                 <AppSidebar />
                 {children}
               </SidebarProvider>

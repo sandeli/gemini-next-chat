@@ -1,7 +1,17 @@
 'use client'
 import { useCallback, memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MessageSquarePlus, EllipsisVertical, Pin, PinOff, Copy, PencilLine, WandSparkles, Trash } from 'lucide-react'
+import {
+  MessageSquarePlus,
+  EllipsisVertical,
+  Pin,
+  PinOff,
+  Copy,
+  PencilLine,
+  WandSparkles,
+  Trash,
+  Download,
+} from 'lucide-react'
 import {
   Sidebar,
   SidebarHeader,
@@ -29,6 +39,7 @@ import { useSettingStore } from '@/store/setting'
 import { GEMINI_API_BASE_URL } from '@/constant/urls'
 import { encodeToken } from '@/utils/signature'
 import summaryTitle, { type RequestProps } from '@/utils/summaryTitle'
+import { downloadFile } from '@/utils/common'
 import { cn } from '@/utils'
 import { customAlphabet } from 'nanoid'
 import { entries, isNull } from 'lodash-es'
@@ -156,6 +167,60 @@ function ConversationItem(props: Props) {
     [remove],
   )
 
+  const exportConversation = useCallback(
+    (id: string) => {
+      const { currentId, query } = useConversationStore.getState()
+      const { backup } = useMessageStore.getState()
+      const conversation = id === currentId ? backup() : query(id)
+      let mdContentList: string[] = []
+
+      const wrapJsonCode = (content: string) => {
+        return `\`\`\`json \n${content} \n\`\`\``
+      }
+
+      if (conversation.systemInstruction) {
+        mdContentList.push('> SystemInstruction')
+        mdContentList.push(conversation.systemInstruction)
+      }
+      conversation.messages.forEach((item) => {
+        if (item.role === 'user') {
+          mdContentList.push('> User')
+        } else if (item.role === 'model') {
+          mdContentList.push('> AI')
+        } else if (item.role === 'function') {
+          mdContentList.push('> Plugin')
+        }
+        if (item.attachments) {
+          item.attachments.forEach((attachment) => {
+            if (attachment.preview) {
+              mdContentList.push(`![${attachment.name}](${attachment.preview})`)
+            } else {
+              mdContentList.push(`[${attachment.name}](${attachment.metadata?.uri})`)
+            }
+          })
+        }
+        item.parts.forEach((part) => {
+          if (part.inlineData) {
+            mdContentList.push(
+              `[${part.inlineData.mimeType}](data:${part.inlineData.mimeType};base64,${part.inlineData.data})`,
+            )
+          } else if (part.functionCall) {
+            mdContentList.push(part.functionCall.name)
+            mdContentList.push(wrapJsonCode(JSON.stringify(part.functionCall.args, null, 2)))
+          } else if (part.functionResponse) {
+            mdContentList.push(part.functionResponse.name)
+            mdContentList.push(wrapJsonCode(JSON.stringify(part.functionResponse.response, null, 2)))
+          } else if (part.text) {
+            mdContentList.push(part.text)
+          }
+        })
+      })
+      const mdContent = mdContentList.join('\n\n')
+      downloadFile(mdContent, conversation.title ?? t('chatAnything'), 'text/markdown')
+    },
+    [t],
+  )
+
   return (
     <div
       className={cn(
@@ -215,6 +280,10 @@ function ConversationItem(props: Props) {
               <DropdownMenuItem onClick={() => handleCopy(id)}>
                 <Copy />
                 <span>{t('newCopy')}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportConversation(id)}>
+                <Download />
+                <span>{t('exportConversation')}</span>
               </DropdownMenuItem>
               {id !== 'default' ? (
                 <DropdownMenuGroup>

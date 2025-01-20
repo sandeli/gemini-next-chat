@@ -30,7 +30,9 @@ export async function POST(req: NextRequest) {
 
   const response = await fetch(`${geminiApiBaseUrl}/upload/v1beta/files?${searchParams.toString()}`, {
     method: 'POST',
-    headers: new Headers(req.headers),
+    headers: {
+      'Content-Type': req.headers.get('Content-Type') as string,
+    },
     body: req.body,
   })
   return new NextResponse(response.body, response)
@@ -43,7 +45,10 @@ export async function PUT(req: NextRequest) {
 
   const response = await fetch(`${geminiApiBaseUrl}/upload/v1beta/files?${searchParams.toString()}`, {
     method: 'PUT',
-    headers: new Headers(req.headers),
+    headers: {
+      'Content-Type': req.headers.get('Content-Type') as string,
+      'Content-Range': req.headers.get('Content-Range') as string,
+    },
     body: req.body,
   })
   return new NextResponse(response.body, response)

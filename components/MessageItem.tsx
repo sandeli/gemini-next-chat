@@ -11,7 +11,6 @@ import {
   User,
   Bot,
   RotateCw,
-  Sparkles,
   Copy,
   CopyCheck,
   PencilLine,
@@ -21,7 +20,6 @@ import {
   LoaderCircle,
   CircleCheck,
   Blocks,
-  Languages,
 } from 'lucide-react'
 import { EdgeSpeech } from '@xiangfa/polly'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -38,10 +36,7 @@ import Arxiv from '@/components/plugins/Arxiv'
 import { useMessageStore } from '@/store/chat'
 import { useSettingStore } from '@/store/setting'
 import { usePluginStore } from '@/store/plugin'
-import { GEMINI_API_BASE_URL } from '@/constant/urls'
 import AudioStream from '@/utils/AudioStream'
-import { encodeToken } from '@/utils/signature'
-import translate from '@/utils/translate'
 import { sentenceSegmentation } from '@/utils/common'
 import { cn } from '@/utils'
 import { OFFICAL_PLUGINS } from '@/plugins'
@@ -104,7 +99,6 @@ function MessageItem(props: Props) {
   const [hasTextContent, setHasTextContent] = useState<boolean>(false)
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const [isCopyed, setIsCopyed] = useState<boolean>(false)
-  const [isTranslating, setIsTranslating] = useState<boolean>(false)
   const [showLightbox, setShowLightbox] = useState<boolean>(false)
   const [lightboxIndex, setLightboxIndex] = useState<number>(0)
   const fileList = useMemo(() => {
@@ -195,40 +189,6 @@ function MessageItem(props: Props) {
       if (response) {
         const audioData = await response.arrayBuffer()
         audioStream.play({ audioData })
-      }
-    }
-  }, [])
-
-  const handleTranslate = useCallback(async (id: string, content: string) => {
-    const { messages, update } = useMessageStore.getState()
-    const { apiKey, apiProxy, lang, password } = useSettingStore.getState()
-    const message = find(messages, { id })
-
-    if (message) {
-      const messageParts = [...message.parts]
-      const textPartIndex = findLastIndex(messageParts, (item) => !isUndefined(item.text))
-      if (textPartIndex !== -1) {
-        setIsTranslating(true)
-        try {
-          const readableStream = await translate(
-            apiKey === '' ? encodeToken(password) : apiKey,
-            apiKey === '' ? '/api/google' : apiProxy || GEMINI_API_BASE_URL,
-            content,
-            lang,
-          )
-          let translatedText = ''
-          const reader = readableStream.getReader()
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-            translatedText += new TextDecoder().decode(value)
-          }
-          messageParts[textPartIndex].text = translatedText
-          update(id, { ...message, parts: messageParts })
-        } catch (err) {
-          console.error(err)
-        }
-        setIsTranslating(false)
       }
     }
   }, [])
@@ -469,7 +429,7 @@ function MessageItem(props: Props) {
                       title={t(role === 'user' ? 'resend' : 'regenerate')}
                       onClick={() => handleRegenerate(id)}
                     >
-                      {role === 'user' ? <RotateCw className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                      <RotateCw className="h-4 w-4" />
                     </IconButton>
                     <IconButton title={t('edit')} onClick={() => setIsEditing(true)}>
                       <PencilLine className="h-4 w-4" />
@@ -481,13 +441,6 @@ function MessageItem(props: Props) {
                 ) : null}
                 {hasTextContent ? (
                   <>
-                    <IconButton title={t('translate')} onClick={() => handleTranslate(id, content)}>
-                      {isTranslating ? (
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Languages className="h-4 w-4" />
-                      )}
-                    </IconButton>
                     <IconButton title={t('copy')} className={`copy-${id}`} onClick={() => handleCopy()}>
                       {isCopyed ? <CopyCheck className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </IconButton>
