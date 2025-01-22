@@ -64,7 +64,7 @@ export async function textStream(options: {
       if (remainText || chunks.length > 0) {
         onMessage(remainText + chunks.join(''))
         if (buffer) {
-          onStatement(buffer + handleChunk(chunks.join('')))
+          onStatement(buffer)
         }
         remainText = ''
         chunks = []

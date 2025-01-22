@@ -101,7 +101,7 @@ export default async function chat({
       modelParams.tools = officialPlugins
     }
   }
-  if (model.startsWith('gemini-2.0-flash-exp') || model.startsWith('gemini-exp')) {
+  if (model.startsWith('gemini-2.0-flash-exp')) {
     if (modelParams.safetySettings) {
       const safetySettings: NewModelParams['safetySettings'] = []
       modelParams.safetySettings.forEach((item) => {

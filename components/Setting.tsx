@@ -1,21 +1,21 @@
 'use client'
-import { memo, useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { EdgeSpeech } from '@xiangfa/polly'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
-import { MonitorDown } from 'lucide-react'
+import { MonitorDown, RefreshCw } from 'lucide-react'
 import { usePWAInstall } from 'react-use-pwa-install'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
+import Button from '@/components/Button'
 import ResponsiveDialog from '@/components/ResponsiveDialog'
 import i18n from '@/utils/i18n'
 import { fetchModels } from '@/utils/models'
@@ -58,7 +58,7 @@ let cachedModelList = false
 function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
   const { t } = useTranslation()
   const pwaInstall = usePWAInstall()
-  const { update, reset } = useSettingStore()
+  const { apiKey, apiProxy, password, update, reset } = useSettingStore()
   const modelStore = useModelStore()
   const { isProtected, buildMode, modelList: MODEL_LIST } = useEnvStore()
   const [ttsLang, setTtsLang] = useState<string>('')
@@ -183,25 +183,31 @@ function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
     if (pwaInstall) await pwaInstall()
   }, [pwaInstall])
 
+  const uploadModelList = useCallback(() => {
+    const { update } = useModelStore.getState()
+    if (apiKey || password || !isProtected) {
+      fetchModels({ apiKey, apiProxy, password })
+        .then((models) => {
+          if (models.length > 0) {
+            update(models)
+            cachedModelList = true
+          }
+        })
+        .catch(console.error)
+    }
+  }, [apiKey, apiProxy, password, isProtected])
+
+  useEffect(() => {
+    if (open && !cachedModelList) {
+      uploadModelList()
+    }
+  }, [open, uploadModelList])
+
   useLayoutEffect(() => {
     if (buildMode === 'export') {
       setHiddenPasswordInput(true)
     }
-    if (open && !cachedModelList) {
-      const { update } = useModelStore.getState()
-      const { apiKey, apiProxy, password } = useSettingStore.getState()
-      if (apiKey || !isProtected) {
-        fetchModels({ apiKey, apiProxy, password })
-          .then((models) => {
-            if (models.length > 0) {
-              update(models)
-              cachedModelList = true
-            }
-          })
-          .catch(console.error)
-      }
-    }
-  }, [open, buildMode, isProtected])
+  }, [buildMode])
 
   return (
     <ResponsiveDialog
@@ -381,26 +387,37 @@ function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
                     <FormItem className="grid grid-cols-4 items-center gap-4 space-y-0">
                       <FormLabel className="text-right">{t('defaultModel')}</FormLabel>
                       <FormControl>
-                        <Select
-                          defaultValue={field.value}
-                          onValueChange={(value) => {
-                            field.onChange(value)
-                            handleModelChange(value)
-                          }}
-                        >
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder={t('selectDefaultModel')} />
-                          </SelectTrigger>
-                          <SelectContent className="text-left">
-                            {modelOptions.map((name) => {
-                              return (
-                                <SelectItem key={name} value={name}>
-                                  {name}
-                                </SelectItem>
-                              )
-                            })}
-                          </SelectContent>
-                        </Select>
+                        <div className="col-span-3 flex gap-1">
+                          <Select
+                            defaultValue={field.value}
+                            onValueChange={(value) => {
+                              field.onChange(value)
+                              handleModelChange(value)
+                            }}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder={t('selectDefaultModel')} />
+                            </SelectTrigger>
+                            <SelectContent className="text-left">
+                              {modelOptions.map((name) => {
+                                return (
+                                  <SelectItem key={name} value={name}>
+                                    {name}
+                                  </SelectItem>
+                                )
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            title={t('refresh')}
+                            onClick={() => uploadModelList()}
+                          >
+                            <RefreshCw />
+                          </Button>
+                        </div>
                       </FormControl>
                     </FormItem>
                   )}
