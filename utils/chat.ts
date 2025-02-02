@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai'
 import type { InlineDataPart, ModelParams, Tool, ToolConfig, Part, SafetySetting } from '@google/generative-ai'
 import { getVisionPrompt, getFunctionCallPrompt } from '@/utils/prompt'
+import { hasUploadFiles, getRandomKey } from '@/utils/common'
 import { OldVisionModel } from '@/constant/model'
 import { isUndefined } from 'lodash-es'
 
@@ -66,7 +67,7 @@ export default async function chat({
   generationConfig,
   safety,
 }: RequestProps) {
-  const genAI = new GoogleGenerativeAI(apiKey)
+  const genAI = new GoogleGenerativeAI(getRandomKey(apiKey, hasUploadFiles(messages)))
   const modelParams: NewModelParams = {
     model,
     generationConfig,

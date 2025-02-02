@@ -2,7 +2,7 @@
 import dynamic from 'next/dynamic'
 import { useRef, useState, useMemo, KeyboardEvent, useEffect, useCallback, useLayoutEffect } from 'react'
 import type { FunctionCall } from '@google/generative-ai'
-import { EdgeSpeech, getRecordMineType } from '@xiangfa/polly'
+import { AudioRecorder, EdgeSpeech, getRecordMineType } from '@xiangfa/polly'
 import SiriWave from 'siriwave'
 import {
   MessageCircleHeart,
@@ -32,7 +32,6 @@ import { pluginHandle } from '@/plugins'
 import i18n from '@/utils/i18n'
 import chat, { type RequestProps } from '@/utils/chat'
 import { summarizePrompt, getVoiceModelPrompt, getSummaryPrompt, getTalkAudioPrompt } from '@/utils/prompt'
-import { AudioRecorder } from '@/utils/Recorder'
 import AudioStream from '@/utils/AudioStream'
 import PromiseQueue from '@/utils/PromiseQueue'
 import { textStream, simpleTextStream } from '@/utils/textStream'
@@ -320,7 +319,7 @@ export default function Home() {
         onMessage: (content) => {
           text += content
           setMessage(text)
-          scrollToBottom()
+          // scrollToBottom()
         },
         onStatement: (statement) => {
           if (talkMode === 'voice') {
@@ -348,7 +347,7 @@ export default function Home() {
           }
           setMessage('')
           setThinkingMessage('')
-          scrollToBottom()
+          // scrollToBottom()
           setIsThinking(false)
           stopGeneratingRef.current = false
           setExecutingPlugins([])
@@ -374,7 +373,7 @@ export default function Home() {
         },
       })
     },
-    [scrollToBottom, speech, summarize, setThinkingMessage],
+    [speech, summarize, setThinkingMessage],
   )
 
   const handleFunctionCall = useCallback(
@@ -541,11 +540,11 @@ export default function Home() {
       if (files.length > 0) {
         for (const file of files) {
           if (isOldVisionModel) {
-            if (file.preview) {
+            if (file.dataUrl) {
               messagePart.push({
                 inlineData: {
                   mimeType: file.mimeType,
-                  data: file.preview.split(';base64,')[1],
+                  data: file.dataUrl.split(';base64,')[1],
                 },
               })
             }
@@ -555,6 +554,13 @@ export default function Home() {
                 fileData: {
                   mimeType: file.metadata.mimeType,
                   fileUri: file.metadata.uri,
+                },
+              })
+            } else if (file.dataUrl) {
+              messagePart.push({
+                inlineData: {
+                  mimeType: file.mimeType,
+                  data: file.dataUrl.split(';base64,')[1],
                 },
               })
             }
@@ -998,6 +1004,7 @@ export default function Home() {
               onChange={(ev) => {
                 setContent(ev.target.value)
                 setTextareaHeight(ev.target.value === '' ? TEXTAREA_DEFAULT_HEIGHT : ev.target.scrollHeight)
+                if (messages.length > 1) scrollToBottom()
               }}
               onKeyDown={handleKeyDown}
             />

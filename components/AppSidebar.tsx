@@ -190,19 +190,12 @@ function ConversationItem(props: Props) {
         } else if (item.role === 'function') {
           mdContentList.push('> Plugin')
         }
-        if (item.attachments) {
-          item.attachments.forEach((attachment) => {
-            if (attachment.preview) {
-              mdContentList.push(`![${attachment.name}](${attachment.preview})`)
-            } else {
-              mdContentList.push(`[${attachment.name}](${attachment.metadata?.uri})`)
-            }
-          })
-        }
         item.parts.forEach((part) => {
-          if (part.inlineData) {
+          if (part.fileData) {
+            mdContentList.push(`[${part.fileData.mimeType}](${part.fileData.fileUri})`)
+          } else if (part.inlineData) {
             mdContentList.push(
-              `[${part.inlineData.mimeType}](data:${part.inlineData.mimeType};base64,${part.inlineData.data})`,
+              `${part.inlineData.mimeType.startsWith('data:image/') ? '!' : ''}[${part.inlineData.mimeType}](data:${part.inlineData.mimeType};base64,${part.inlineData.data})`,
             )
           } else if (part.functionCall) {
             mdContentList.push(part.functionCall.name)

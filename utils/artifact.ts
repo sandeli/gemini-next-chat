@@ -7,6 +7,7 @@ import {
   continuation,
   addEmojis,
 } from '@/utils/prompt'
+import { getRandomKey } from '@/utils/common'
 import { GEMINI_API_BASE_URL } from '@/constant/urls'
 
 type Props = {
@@ -30,7 +31,7 @@ export default async function artifact(props: Props) {
     args = '{}',
   } = props
 
-  const genAI = new GoogleGenerativeAI(apiKey)
+  const genAI = new GoogleGenerativeAI(getRandomKey(apiKey))
 
   let prompt = ''
   const params = JSON.parse(args)

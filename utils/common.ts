@@ -98,3 +98,24 @@ export function downloadFile(content: string, filename: string, fileType: string
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
+
+export function hasUploadFiles(messages: Message[]): boolean {
+  return messages.some((message) => message.parts.some((part) => part.fileData))
+}
+
+export function getRandomKey(apiKey: string, useUploadKey = false): string {
+  const apiKeyList = apiKey.split(',')
+  if (apiKeyList[0].startsWith('AI') && apiKeyList[0].length === 39) {
+    if (apiKeyList.length === 1) return apiKeyList[0]
+    return useUploadKey ? apiKeyList[0] : shuffleArray(apiKeyList)[0]
+  } else {
+    return apiKey
+  }
+}
+
+export function convertSvgToImage(svg: ChildNode | null) {
+  if (svg) {
+    const text = new XMLSerializer().serializeToString(svg)
+    return downloadFile(text, 'Mermaid', 'image/svg+xml')
+  }
+}
