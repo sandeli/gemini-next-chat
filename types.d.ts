@@ -1,10 +1,18 @@
-import type { Content } from '@google/generative-ai'
+import type { Content, GroundingMetadata } from '@google/generative-ai'
 import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types'
 
 declare global {
   interface Message extends Content {
     id: string
     attachments?: FileInfor[]
+    groundingMetadata?: GroundingMetadata & {
+      groundingChunks: Array<{ web: { uri: string; title: string } }>
+      groundingSupports: Array<{
+        segment: { startIndex?: number; endIndex?: number; text: string }
+        groundingChunkIndices: number[]
+        confidenceScores: number[]
+      }>
+    }
   }
 
   interface Setting {

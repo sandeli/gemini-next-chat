@@ -85,29 +85,11 @@ function ConversationItem(props: Props) {
   const [editTitleMode, setEditTitleMode] = useState<boolean>(false)
   const conversationTitle = useMemo(() => (title ? title : t('chatAnything')), [title, t])
 
-  const handleSelect = useCallback((id: string) => {
-    const { currentId, query, addOrUpdate, setCurrentId } = useConversationStore.getState()
-    const { backup, restore } = useMessageStore.getState()
-    const oldConversation = backup()
-    addOrUpdate(currentId, oldConversation)
-
-    const newConversation = query(id)
-    setCurrentId(id)
-    restore(newConversation)
-  }, [])
-
-  const editTitle = useCallback(
-    (text: string) => {
-      setTitle(text)
-      setEditTitleMode(false)
-    },
-    [setTitle],
-  )
-
   const handleSummaryTitle = useCallback(async (id: string) => {
     const { lang, apiKey, apiProxy, password } = useSettingStore.getState()
     const { currentId, query, addOrUpdate } = useConversationStore.getState()
     const { messages, systemInstruction, setTitle } = useMessageStore.getState()
+
     const conversation = query(id)
     const config: RequestProps = {
       apiKey,
@@ -115,6 +97,9 @@ function ConversationItem(props: Props) {
       messages: id === currentId ? messages : conversation.messages,
       systemRole: id === currentId ? systemInstruction : conversation.systemInstruction,
     }
+
+    if (config.messages.length === 0) return false
+
     if (apiKey !== '') {
       config.baseUrl = apiProxy || GEMINI_API_BASE_URL
     } else {
@@ -132,6 +117,30 @@ function ConversationItem(props: Props) {
     addOrUpdate(id, { ...conversation, title: content })
     if (id === currentId) setTitle(content)
   }, [])
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      const { currentId, query, addOrUpdate, setCurrentId } = useConversationStore.getState()
+      const { title, backup, restore } = useMessageStore.getState()
+      const oldConversation = backup()
+      addOrUpdate(currentId, oldConversation)
+
+      const newConversation = query(id)
+      setCurrentId(id)
+      restore(newConversation)
+
+      if (!title && currentId !== 'default') handleSummaryTitle(currentId)
+    },
+    [handleSummaryTitle],
+  )
+
+  const editTitle = useCallback(
+    (text: string) => {
+      setTitle(text)
+      setEditTitleMode(false)
+    },
+    [setTitle],
+  )
 
   const handleCopy = useCallback(
     (id: string) => {
@@ -175,7 +184,7 @@ function ConversationItem(props: Props) {
       let mdContentList: string[] = []
 
       const wrapJsonCode = (content: string) => {
-        return `\`\`\`json \n${content} \n\`\`\``
+        return `\`\`\`json\n${content}\n\`\`\``
       }
 
       if (conversation.systemInstruction) {
@@ -204,7 +213,18 @@ function ConversationItem(props: Props) {
             mdContentList.push(part.functionResponse.name)
             mdContentList.push(wrapJsonCode(JSON.stringify(part.functionResponse.response, null, 2)))
           } else if (part.text) {
-            mdContentList.push(part.text)
+            let content = part.text
+            if (item.groundingMetadata) {
+              const { groundingSupports = [], groundingChunks = [] } = item.groundingMetadata
+              groundingSupports.forEach((item) => {
+                content = content.replace(
+                  item.segment.text,
+                  `${item.segment.text}${item.groundingChunkIndices.map((indice) => `[[${indice + 1}][gs-${indice}]]`).join('')}`,
+                )
+              })
+              content += `\n\n${groundingChunks.map((item, idx) => `[gs-${idx}]: <${item.web?.uri}> "${item.web?.title}"`).join('\n')}`
+            }
+            mdContentList.push(content)
           }
         })
       })

@@ -15,12 +15,13 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
+import { useToast } from '@/components/ui/use-toast'
 import Button from '@/components/Button'
 import ResponsiveDialog from '@/components/ResponsiveDialog'
 import i18n from '@/utils/i18n'
 import { fetchModels } from '@/utils/models'
 import locales from '@/constant/locales'
-import { Model } from '@/constant/model'
+import { Model, DefaultModel } from '@/constant/model'
 import { GEMINI_API_BASE_URL, ASSISTANT_INDEX_URL } from '@/constant/urls'
 import { useSettingStore, useEnvStore } from '@/store/setting'
 import { useModelStore } from '@/store/model'
@@ -55,10 +56,14 @@ const formSchema = z.object({
 
 let cachedModelList = false
 
+function filterModel(models: Model[] = []) {
+  return models.filter((model) => model.name.startsWith('models/gemini-'))
+}
+
 function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
   const { t } = useTranslation()
+  const { toast } = useToast()
   const pwaInstall = usePWAInstall()
-  const { apiKey, apiProxy, password, update, reset } = useSettingStore()
   const modelStore = useModelStore()
   const { isProtected, buildMode, modelList: MODEL_LIST } = useEnvStore()
   const [ttsLang, setTtsLang] = useState<string>('')
@@ -67,7 +72,7 @@ function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
     return new EdgeSpeech({ locale: ttsLang }).voiceOptions || []
   }, [ttsLang])
   const modelOptions = useMemo(() => {
-    const { update } = useSettingStore.getState()
+    const { model, update } = useSettingStore.getState()
 
     if (modelStore.models.length > 0) {
       const models = values(Model)
@@ -80,7 +85,7 @@ function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
     }
 
     let modelList: string[] = []
-    let defaultModel = 'gemini-1.5-flash-latest'
+    let defaultModel = DefaultModel
     const defaultModelList: string[] = keys(Model)
     const userModels: string[] = MODEL_LIST ? MODEL_LIST.split(',') : []
 
@@ -96,15 +101,17 @@ function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
       } else if (modelName.startsWith('@')) {
         const name = modelName.substring(1)
         if (!modelList.includes(name)) modelList.push(name)
-        update({ model: name })
-        defaultModel = name
+        if (model === '') {
+          update({ model: name })
+          defaultModel = name
+        }
       } else {
         modelList.push(modelName.startsWith('+') ? modelName.substring(1) : modelName)
       }
     })
 
     const models = modelList.length > 0 ? modelList : defaultModelList
-    if (!models.includes(defaultModel)) {
+    if (models.length > 0 && !models.includes(defaultModel)) {
       update({ model: models[0] })
     }
 
@@ -164,16 +171,18 @@ function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
   )
 
   const handleReset = useCallback(() => {
+    const { reset } = useSettingStore.getState()
     const defaultValues = reset()
     form.reset(defaultValues)
-  }, [reset, form])
+  }, [form])
 
   const handleSubmit = useCallback(
     (values: z.infer<typeof formSchema>) => {
+      const { update } = useSettingStore.getState()
       update(values as Partial<Setting>)
       onClose()
     },
-    [onClose, update],
+    [onClose],
   )
 
   const handlePwaInstall = useCallback(async () => {
@@ -184,18 +193,24 @@ function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
   }, [pwaInstall])
 
   const uploadModelList = useCallback(() => {
-    const { update } = useModelStore.getState()
+    const { update: updateModelList } = useModelStore.getState()
+    const { apiKey, apiProxy, password } = useSettingStore.getState()
     if (apiKey || password || !isProtected) {
-      fetchModels({ apiKey, apiProxy, password })
-        .then((models) => {
-          if (models.length > 0) {
-            update(models)
-            cachedModelList = true
-          }
-        })
-        .catch(console.error)
+      fetchModels({ apiKey, apiProxy, password }).then((result) => {
+        if (result.error) {
+          return toast({
+            description: result.error.message,
+            duration: 3000,
+          })
+        }
+        const models = filterModel(result.models)
+        if (models.length > 0) {
+          updateModelList(models)
+          cachedModelList = true
+        }
+      })
     }
-  }, [apiKey, apiProxy, password, isProtected])
+  }, [isProtected, toast])
 
   useEffect(() => {
     if (open && !cachedModelList) {
@@ -204,10 +219,10 @@ function Setting({ open, hiddenTalkPanel, onClose }: SettingProps) {
   }, [open, uploadModelList])
 
   useLayoutEffect(() => {
-    if (buildMode === 'export') {
+    if (buildMode === 'export' || !isProtected) {
       setHiddenPasswordInput(true)
     }
-  }, [buildMode])
+  }, [buildMode, isProtected])
 
   return (
     <ResponsiveDialog

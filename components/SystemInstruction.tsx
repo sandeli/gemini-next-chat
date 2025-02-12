@@ -141,7 +141,7 @@ function SystemInstruction() {
               </form>
             </Form>
           ) : (
-            <Magicdown>{html}</Magicdown>
+            <Magicdown className="small">{html}</Magicdown>
           )}
         </CardContent>
       </div>

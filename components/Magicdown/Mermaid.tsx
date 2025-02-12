@@ -65,8 +65,8 @@ function Mermaid({ children }: Props) {
       </div>
       <div
         className={cn(
-          'mermaid flex w-full bg-gray-200/50 p-4 dark:bg-[rgb(15,23,42)]',
-          rendered ? 'cursor-pointer justify-center overflow-auto' : '',
+          'mermaid flex w-full overflow-auto rounded bg-[#f3f4f6] p-4 dark:bg-[rgb(15,23,42)]',
+          rendered ? 'cursor-pointer justify-center' : '',
         )}
         ref={mermaidContainerRef}
       >

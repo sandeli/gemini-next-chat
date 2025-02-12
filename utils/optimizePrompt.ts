@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { DefaultModel } from '@/constant/model'
 import { getRandomKey } from '@/utils/common'
 
 export type RequestProps = {
@@ -57,7 +58,7 @@ The final prompt you output should adhere to the following structure below. Do n
 export default async function optimizePrompt(props: RequestProps) {
   const { apiKey, baseUrl, content } = props
   const genAI = new GoogleGenerativeAI(getRandomKey(apiKey))
-  const geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest', systemInstruction }, { baseUrl })
+  const geminiModel = genAI.getGenerativeModel({ model: DefaultModel, systemInstruction }, { baseUrl })
   const { stream } = await geminiModel.generateContentStream([content])
   return new ReadableStream({
     async start(controller) {

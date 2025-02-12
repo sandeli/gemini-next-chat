@@ -125,7 +125,7 @@ A cross-platform application client that supports a permanent menu bar, doubling
 ## Get Started
 
 1. Get [Gemini API Key](https://aistudio.google.com/app/apikey)
-2. One-click deployment of the project, you can choose to deploy to Vercel or Cloudflare
+2. One-click deployment of the project, you can choose to deploy to Vercel
 
    [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fu14app%2Fgemini-next-chat&project-name=gemini-next-chat&env=GEMINI_API_KEY&env=ACCESS_PASSWORD&repository-name=gemini-next-chat)
 
@@ -145,7 +145,7 @@ You can star or watch this project or follow author to get release notifications
 
 #### `GEMINI_API_KEY` (optional)
 
-Your Gemini api key. If you need to `enable` the server api, this is required.
+Your Gemini api key. This is required if you need to `enable` the server api. **This variable does not affect the value of the Gemini key on the frontend pages.**
 Supports multiple keys, each key is separated by `,`, i.e. `key1,key2,key3`
 
 #### `GEMINI_API_BASE_URL` (optional)
@@ -154,7 +154,7 @@ Supports multiple keys, each key is separated by `,`, i.e. `key1,key2,key3`
 
 > Examples: `http://your-gemini-proxy.com`
 
-Override Gemini api request base url. **To avoid server-side proxy url leaks, links in front-end pages will not be overwritten. **
+Override the Gemini api request base url. **In order to avoid server-side proxy url leakage, the value in the front-end page will not be overwritten and affected.**
 
 #### `NEXT_PUBLIC_GEMINI_MODEL_LIST` (optional)
 
@@ -292,9 +292,22 @@ If you deploy the project in a subdirectory and encounter resource loading failu
 
 Currently, the two kind models `Gemini 1.5` and `Gemini 2.0` support most images, audios, videos and some text files. For details. For other document types, we will try to use [LangChain.js](https://js.langchain.com/v0.2/docs/introduction/) later.
 
+## Contributing
+
+Contributions to this project are welcome! If you would like to contribute, please follow these steps:
+
+1. Fork the repository on GitHub.
+2. Clone your fork to your local machine.
+3. Create a new branch for your changes.
+4. Make your changes and commit them to your branch.
+5. Push your changes to your fork on GitHub.
+6. Open a pull request from your branch to the main repository.
+
+Please ensure that your code follows the project's coding style and that all tests pass before submitting a pull request. If you find any bugs or have suggestions for improvements, feel free to open an issue on GitHub.
+
 ## LICENSE
 
-[MIT](https://www.apache.org/licenses/LICENSE-2.0)
+This project is licensed under the [MIT](https://www.apache.org/licenses/LICENSE-2.0) License. See the LICENSE file for the full license text.
 
 ## Star History
 

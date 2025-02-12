@@ -21,8 +21,7 @@ type imageUploadOptions = {
 }
 
 const compressionOptions = {
-  maxSizeMB: 2,
-  maxWidthOrHeight: 1024,
+  maxSizeMB: 4,
   useWebWorker: true,
   initialQuality: 0.85,
   libURL: 'scripts/browser-image-compression.js',

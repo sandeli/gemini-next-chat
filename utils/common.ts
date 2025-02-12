@@ -99,7 +99,7 @@ export function downloadFile(content: string, filename: string, fileType: string
   URL.revokeObjectURL(url)
 }
 
-export function hasUploadFiles(messages: Message[]): boolean {
+export function hasUploadFiles(messages: Message[] = []): boolean {
   return messages.some((message) => message.parts.some((part) => part.fileData))
 }
 

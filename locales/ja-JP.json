@@ -168,5 +168,7 @@
   "shortest": "最も短い",
   "continuation": "継続",
   "addEmojis": "絵文字を追加",
-  "moreTools": "その他のツール"
+  "moreTools": "その他のツール",
+  "chatContentCleared": "チャット内容がクリアされました",
+  "undo": "元に戻す"
 }

@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/ge
 import type { InlineDataPart, ModelParams, Tool, ToolConfig, Part, SafetySetting } from '@google/generative-ai'
 import { getVisionPrompt, getFunctionCallPrompt } from '@/utils/prompt'
 import { hasUploadFiles, getRandomKey } from '@/utils/common'
-import { OldVisionModel } from '@/constant/model'
+import { OldVisionModel, DefaultModel } from '@/constant/model'
 import { isUndefined } from 'lodash-es'
 
 export type RequestProps = {
@@ -56,12 +56,19 @@ export function getSafetySettings(level: string) {
   })
 }
 
+function canUseSearchAsTool(model: string) {
+  if (model.startsWith('gemini-2.0-flash') || model.startsWith('gemini-2.0-pro')) {
+    if (model.includes('lite') || model.includes('thinking')) return false
+    return true
+  }
+}
+
 export default async function chat({
   messages = [],
   systemInstruction,
   tools,
   toolConfig,
-  model = 'gemini-1.5-flash-latest',
+  model = DefaultModel,
   apiKey,
   baseUrl,
   generationConfig,
@@ -96,13 +103,11 @@ export default async function chat({
     }
     if (toolConfig) modelParams.toolConfig = toolConfig
   }
-  if (model === 'gemini-2.0-flash-exp') {
+  if (canUseSearchAsTool(model)) {
     const officialPlugins = [{ googleSearch: {} }]
     if (!tools) {
       modelParams.tools = officialPlugins
     }
-  }
-  if (model.startsWith('gemini-2.0-flash-exp')) {
     if (modelParams.safetySettings) {
       const safetySettings: NewModelParams['safetySettings'] = []
       modelParams.safetySettings.forEach((item) => {

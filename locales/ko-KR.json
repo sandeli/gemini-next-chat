@@ -168,5 +168,7 @@
   "shortest": "가장 짧은",
   "continuation": "계속",
   "addEmojis": "이모지 추가",
-  "moreTools": "더 많은 도구"
+  "moreTools": "더 많은 도구",
+  "chatContentCleared": "채팅 내용이 지워졌습니다",
+  "undo": "실행 취소"
 }

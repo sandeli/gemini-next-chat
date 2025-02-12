@@ -168,5 +168,7 @@
   "shortest": "Am kürzesten",
   "continuation": "Fortsetzung",
   "addEmojis": "Emojis hinzufügen",
-  "moreTools": "Weitere Werkzeuge"
+  "moreTools": "Weitere Werkzeuge",
+  "chatContentCleared": "Chatinhalt gelöscht",
+  "undo": "Rückgängig"
 }

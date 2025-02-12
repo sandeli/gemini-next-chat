@@ -1,5 +1,4 @@
 {
-  "title": "Gemini Next Chat",
   "status": {
     "thinking": "التفكير"
   },
@@ -169,5 +168,7 @@
   "shortest": "الأقصر",
   "continuation": "استمرار",
   "addEmojis": "إضافة رموز تعبيرية",
-  "moreTools": "المزيد من الأدوات"
+  "moreTools": "المزيد من الأدوات",
+  "chatContentCleared": "تم مسح محتوى الدردشة",
+  "undo": "تراجع"
 }

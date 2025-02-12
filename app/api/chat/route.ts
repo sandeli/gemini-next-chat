@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { GEMINI_API_BASE_URL } from '@/constant/urls'
 import { handleError } from '../utils'
 import { hasUploadFiles, getRandomKey } from '@/utils/common'
 
@@ -11,23 +12,22 @@ const geminiApiBaseUrl = process.env.GEMINI_API_BASE_URL as string
 export async function POST(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams
   const body = await req.json()
-  const model = searchParams.get('model')
-  const version = model?.includes('-thinking') ? 'v1alpha' : 'v1beta'
+  const model = searchParams.get('model')!
+  const version = model.includes('thinking') ? 'v1alpha' : 'v1beta'
   const apiKey = getRandomKey(geminiApiKey, hasUploadFiles(body.contents))
 
   try {
-    const response = await fetch(
-      `${geminiApiBaseUrl || 'https://generativelanguage.googleapis.com'}/${version}/models/${model}?alt=sse`,
-      {
-        method: req.method,
-        headers: {
-          'Content-Type': req.headers.get('Content-Type') || 'application/json',
-          'x-goog-api-client': req.headers.get('x-goog-api-client') || 'genai-js/0.21.0',
-          'x-goog-api-key': apiKey,
-        },
-        body: JSON.stringify(body),
+    let url = `${geminiApiBaseUrl || GEMINI_API_BASE_URL}/${version}/models/${model}`
+    if (!model.startsWith('imagen')) url += '?alt=sse'
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': req.headers.get('Content-Type') || 'application/json',
+        'x-goog-api-client': req.headers.get('x-goog-api-client') || 'genai-js/0.21.0',
+        'x-goog-api-key': apiKey,
       },
-    )
+      body: JSON.stringify(body),
+    })
     return new NextResponse(response.body, response)
   } catch (error) {
     if (error instanceof Error) {

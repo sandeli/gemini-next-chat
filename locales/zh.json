@@ -168,5 +168,7 @@
   "shortest": "更短",
   "continuation": "续写",
   "addEmojis": "添加表情",
-  "moreTools": "更多工具"
+  "moreTools": "更多工具",
+  "chatContentCleared": "聊天内容已清空",
+  "undo": "撤销"
 }

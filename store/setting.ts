@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, type StorageValue } from 'zustand/middleware'
 import storage from '@/utils/Storage'
+import { DefaultModel } from '@/constant/model'
 import { omitBy, isFunction, isNull } from 'lodash-es'
 
 type DefaultSetting = Omit<Setting, 'isProtected' | 'talkMode' | 'sidebarState'>
@@ -22,7 +23,7 @@ const defaultSetting: DefaultSetting = {
   password: '',
   apiKey: '',
   apiProxy: '',
-  model: 'gemini-1.5-flash-latest',
+  model: DefaultModel,
   sttLang: '',
   ttsLang: '',
   ttsVoice: '',
