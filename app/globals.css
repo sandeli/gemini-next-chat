@@ -115,6 +115,15 @@ body {
   width: 20px;
   height: 20px;
 }
+.text-line-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .text-line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

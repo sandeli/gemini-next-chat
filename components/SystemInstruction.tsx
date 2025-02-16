@@ -15,7 +15,6 @@ import { useSettingStore } from '@/store/setting'
 import { GEMINI_API_BASE_URL } from '@/constant/urls'
 import { encodeToken } from '@/utils/signature'
 import optimizePrompt, { type RequestProps } from '@/utils/optimizePrompt'
-import { upperFirst } from 'lodash-es'
 
 const formSchema = z.object({
   content: z.string(),
@@ -79,7 +78,7 @@ function SystemInstruction() {
   }, [systemInstruction])
 
   return (
-    <Card>
+    <Card className="dark:border-slate-500">
       <CardHeader className="flex flex-row justify-between space-y-0 px-4 pb-1 pt-3">
         <CardTitle className="inline-flex text-lg font-medium">
           {t('assistantSetting')}{' '}
