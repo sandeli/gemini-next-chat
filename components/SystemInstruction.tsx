@@ -15,12 +15,19 @@ import { useSettingStore } from '@/store/setting'
 import { GEMINI_API_BASE_URL } from '@/constant/urls'
 import { encodeToken } from '@/utils/signature'
 import optimizePrompt, { type RequestProps } from '@/utils/optimizePrompt'
+import { cn } from '@/utils'
+
+type Props = {
+  className?: string
+  maxHeight?: string
+  closeable?: boolean
+}
 
 const formSchema = z.object({
   content: z.string(),
 })
 
-function SystemInstruction() {
+function SystemInstruction({ className = '', maxHeight = '140px', closeable = true }: Props) {
   const { t } = useTranslation()
   const { instruction, setSystemInstructionEditMode } = useMessageStore()
   const systemInstruction = useMessageStore((state) => state.systemInstruction)
@@ -72,13 +79,14 @@ function SystemInstruction() {
 
   useEffect(() => {
     setHtml(systemInstruction)
+    form.setValue('content', systemInstruction)
     return () => {
       setHtml('')
     }
-  }, [systemInstruction])
+  }, [form, systemInstruction])
 
   return (
-    <Card className="dark:border-slate-500">
+    <Card className={cn('dark:border-slate-500', className)}>
       <CardHeader className="flex flex-row justify-between space-y-0 px-4 pb-1 pt-3">
         <CardTitle className="inline-flex text-lg font-medium">
           {t('assistantSetting')}{' '}
@@ -115,12 +123,14 @@ function SystemInstruction() {
           </div>
         ) : (
           <X
-            className="h-7 w-7 cursor-pointer rounded-full p-1 text-muted-foreground hover:bg-secondary/80"
+            className={cn('h-7 w-7 cursor-pointer rounded-full p-1 text-muted-foreground hover:bg-secondary/80', {
+              hidden: !closeable,
+            })}
             onClick={() => handleClear()}
           />
         )}
       </CardHeader>
-      <div className="max-h-[140px] overflow-auto">
+      <div className="overflow-auto" style={{ maxHeight }}>
         <CardContent className="p-4 pt-0">
           {systemInstructionEditMode ? (
             <Form {...form}>

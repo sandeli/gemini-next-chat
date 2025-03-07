@@ -245,11 +245,7 @@ function ConversationItem(props: Props) {
     >
       {editTitleMode ? (
         <div className="relative w-full">
-          <Input
-            className="my-1 h-8"
-            defaultValue={conversationTitle}
-            onChange={(ev) => setCustomTitle(ev.target.value)}
-          />
+          <Input className="my-1 h-8" value={conversationTitle} onChange={(ev) => setCustomTitle(ev.target.value)} />
           <Button
             className="absolute right-1 top-2 h-6 w-6"
             size="icon"

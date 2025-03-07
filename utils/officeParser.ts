@@ -61,10 +61,6 @@ const officeFileTypes = {
   ods: 'application/vnd.oasis.opendocument.spreadsheet',
 }
 
-export function isOfficeFile(mimeType: string) {
-  return Object.values(officeFileTypes).includes(mimeType)
-}
-
 function parseXMLString(xml: string) {
   const parser = new DOMParser()
   return parser.parseFromString(xml, 'text/xml')

@@ -119,3 +119,19 @@ export function convertSvgToImage(svg: ChildNode | null) {
     return downloadFile(text, 'Mermaid', 'image/svg+xml')
   }
 }
+
+export function isOfficeFile(mimeType: string) {
+  const officeFileTypes = {
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    odt: 'application/vnd.oasis.opendocument.text',
+    odp: 'application/vnd.oasis.opendocument.presentation',
+    ods: 'application/vnd.oasis.opendocument.spreadsheet',
+  }
+  return Object.values(officeFileTypes).includes(mimeType)
+}
+
+export function isFullGemini2FlashModel(model: string) {
+  return model.startsWith('gemini-2.0-flash') && !model.includes('lite') && !model.includes('thinking')
+}

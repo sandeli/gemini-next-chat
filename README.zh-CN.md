@@ -67,6 +67,10 @@
 
 支持插件功能，内置网络搜索、网页解读、论文搜索、实时天气等多种实用插件
 
+![Multimodal Live](./docs/images/multimodal-live.jpg)
+
+支持 Multimodal Live API，流畅的语音、视频体验
+
 ![Tray app](./docs/images/trayapp.png)
 
 跨平台的应用客户端，支持常驻菜单栏，让您的工作效率翻倍
@@ -98,7 +102,7 @@
 - 在 1 分钟内使用 Vercel **免费一键部署**
 - 提供体积极小（~4MB）的跨平台客户端（Windows/MacOS/Linux），可以常驻菜单栏，提升办公效率
 - 支持多模态模型，可以理解图片、视频、音频和部分文本文档
-- 语音模式：让您直接与 Gemini 对话
+- 语音模式：让您直接与 Gemini 对话，支持 Multimodal Live API
 - 视觉识别，让 Gemini 可以看懂图片内容
 - 助理市场，拥有数百精选的系统指令
 - 插件系统，内置网络搜索、网页解读、论文搜索、实时天气等多种实用插件
@@ -120,7 +124,9 @@
 - [x] 实现基于 functionCall 插件
 - [x] 支持会话列表
 - [x] 支持对话导出功能
-- [ ] 启用 Multimodal Live API
+- [x] 启用 Multimodal Live API
+- [ ] 支持联网 Deep Research 模式
+- [ ] 支持本地知识库
 
 ## 开始使用
 
@@ -273,13 +279,14 @@ pnpm build:export
 
 2、使用 Cloudflare Worker 进行 api 代理转发，详细设置请参考 [如何使用 Cloudflare Worker 代理 api](./docs/How-to-deploy-the-Cloudflare-Worker-api-proxy.zh-CN.md)。注意，该方案在某些情况下可能无法正常工作。
 
-#### 为什么我无法上传 doc、excel 和 ppt 这类常见文档
-
-目前 `Gemini 1.5` 和 `Gemini 2.0` 这两类模型支持的大部分的图片、音频、视频和部分文本类的文件。对于其他文档类型，后续将尝试使用 [LangChain.js](https://js.langchain.com/v0.2/docs/introduction/) 来实现。
-
 #### 为什么我用 vercel 一键部署后的网站无法在中国正常访问
 
 vercel 部署后生成的域名在几年前就已经被国内网络屏蔽，但并没有屏蔽服务器的 ip 地址。可以自定义域名，就可以在国内正常访问了。由于 vercel 在国内并没有服务器，所以有时候会出现些许的网络波动，属于正常现象。如何设置域名，可以参考我从网上找到的解决文章[Vercel绑定自定义域名](https://docs.tangly1024.com/article/vercel-domain)。
+
+#### 为什么我无法使用 Multimodal Live
+
+目前 Multimodal Live API 只有 Gemini 2.0 Flash 模型支持，因此需要使用 Gemini 2.0 Flash 模型才可以使用。由于在国内无法访问 Gemini Multimodal Live API，因此您可能需要使用 Cloudflare Worker 部署一个代理转发的 API。如何使用请参考 [使用 Cloudflare Worker 代理 Multimodal Live API](./docs/Proxying-the-Multimodal-Live-API-with-Cloudflare-Worker.zh-CN.md)。
+_目前 Multimodal Live API 尚不支持中文语音输出。_
 
 ## 致谢
 
@@ -293,7 +300,7 @@ vercel 部署后生成的域名在几年前就已经被国内网络屏蔽，但�
 ### 灵感来源
 
 - [Lobe Chat](https://github.com/lobehub/lobe-chat)
-- [ChatGPT-Next-Web](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
+- [Next Web](https://github.com/ChatGPTNextWeb/NextChat)
 - [Open Canvas](https://github.com/langchain-ai/open-canvas)
 
 ## 贡献

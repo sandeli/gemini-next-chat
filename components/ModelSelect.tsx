@@ -70,7 +70,7 @@ function ModelSelect({ className, defaultModel }: Props) {
 
   return (
     <Select
-      defaultValue={defaultModel}
+      value={defaultModel}
       onValueChange={(value) => {
         handleModelChange(value)
       }}

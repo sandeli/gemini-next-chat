@@ -67,6 +67,10 @@ Supports Gemini 1.5 and Gemini 2.0 multimodal models
 
 Support plugins, with built-in Web search, Web reader, Arxiv search, Weather and other practical plugins
 
+![Multimodal Live](./docs/images/multimodal-live.jpg)
+
+Support Multimodal Live API, smooth voice and video experience
+
 ![Tray app](./docs/images/trayapp.png)
 
 A cross-platform application client that supports a permanent menu bar, doubling your work efficiency
@@ -98,7 +102,7 @@ A cross-platform application client that supports a permanent menu bar, doubling
 - **Deploy for free with one-click** on Vercel in under 1 minute
 - Provides a very small (~4MB) cross-platform client (Windows/MacOS/Linux), can stay in the menu bar to improve office efficiency
 - Supports multi-modal models and can understand images, videos, audios and some text documents
-- Talk mode: Let you talk directly to Gemini
+- Talk mode: Let you talk directly to Gemini, support Multimodal Live API
 - Visual recognition allows Gemini to understand the content of the picture
 - Assistant market with hundreds of selected system instruction
 - Support plugins, with built-in Web search, Web reader, Arxiv search, Weather and other practical plugins
@@ -120,7 +124,9 @@ A cross-platform application client that supports a permanent menu bar, doubling
 - [x] Implementation based on functionCall plug-in
 - [x] Support conversation list
 - [x] Support conversation export features
-- [ ] Enable Multimodal Live API
+- [x] Enable Multimodal Live API
+- [ ] Support networked Deep Research mode
+- [ ] Support local knowledge base
 
 ## Get Started
 
@@ -277,7 +283,7 @@ If you deploy the project in a subdirectory and encounter resource loading failu
 ### Inspiration
 
 - [Lobe Chat](https://github.com/lobehub/lobe-chat)
-- [ChatGPT-Next-Web](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web)
+- [Next Web](https://github.com/ChatGPTNextWeb/NextChat)
 - [Open Canvas](https://github.com/langchain-ai/open-canvas)
 
 ## FAQ
@@ -288,9 +294,14 @@ If you deploy the project in a subdirectory and encounter resource loading failu
 
 2. Use Cloudflare Worker for API proxy forwarding. For detailed settings, please refer to [How to Use Cloudflare Worker Proxy API](./docs/How-to-deploy-the-Cloudflare-Worker-api-proxy.md). Note that this solution may not work properly in some cases.
 
-#### Why can’t I upload common documents such as doc, excel, and ppt?
+#### Why can't I access the website in China after deploying it with one click using Vercel
 
-Currently, the two kind models `Gemini 1.5` and `Gemini 2.0` support most images, audios, videos and some text files. For details. For other document types, we will try to use [LangChain.js](https://js.langchain.com/v0.2/docs/introduction/) later.
+The domain name generated after deploying Vercel was blocked by the Chinese network a few years ago, but the server's IP address was not blocked. You can customize the domain name and access it normally in China. Since Vercel does not have a server in China, it is normal to have some network fluctuations sometimes. For how to set the domain name, you can refer to the solution article [Vercel binds a custom domain name](https://docs.tangly1024.com/article/vercel-domain) that I found online.
+
+#### Why can't I use Multimodal Live
+
+Currently, the Multimodal Live API is only supported by the Gemini 2.0 Flash model, so you need to use the Gemini 2.0 Flash model to use it. Since the Gemini Multimodal Live API is not accessible in China, you may need to deploy a proxy forwarding API using Cloudflare Worker. For more information, refer to [Proxying the Multimodal Live API with Cloudflare Worker](./docs/Proxying-the-Multimodal-Live-API-with-Cloudflare-Worker.md).
+_Currently, Multimodal Live API does not support Chinese voice output._
 
 ## Contributing
 

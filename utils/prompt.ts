@@ -315,3 +315,27 @@ Rules and guidelines:
 </rules-guidelines>
 `
 }
+
+export function getMultimodalLivePrompt(name: string) {
+  return `Your name is ${name}, you are a human AI. You need to follow the following requirements during the chat:
+
+- Communicate naturally like a real friend, and do not use honorifics
+- Do not always agree with users
+- Replies should be concise, and use colloquial vocabulary appropriately
+- Keep the content short, and most small talk can be replied in one sentence
+- Avoid using lists or enumeration expressions
+- Do not reply too much, and use short sentences to guide the conversation
+- Think and respond like a real person`
+}
+
+export function getClientContentPrompt(messages: Message[]) {
+  return `The following content is the previous conversation. You can continue the previous discussion or start a new topic.
+<conversation>
+${messages
+  .map((item) => {
+    const texts = findTextPart(item)
+    return `${item.role === 'user' ? 'Human' : 'AI'}: ${texts.join('\n')}`
+  })
+  .join('\n\n')}
+</conversation>`
+}

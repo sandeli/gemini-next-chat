@@ -3,15 +3,12 @@ import dynamic from 'next/dynamic'
 import { useRef, useState, useMemo, KeyboardEvent, useEffect, useCallback, useLayoutEffect } from 'react'
 import type { FunctionCall } from '@google/generative-ai'
 import { AudioRecorder, EdgeSpeech, getRecordMineType } from '@xiangfa/polly'
-import SiriWave from 'siriwave'
 import {
   MessageCircleHeart,
   AudioLines,
   Mic,
-  MessageSquareText,
   Settings,
   Square,
-  Pause,
   SendHorizontal,
   Github,
   PanelLeftOpen,
@@ -23,8 +20,6 @@ import { useSidebar } from '@/components/ui/sidebar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToastAction } from '@/components/ui/toast'
 import { useToast } from '@/components/ui/use-toast'
-import SystemInstruction from '@/components/SystemInstruction'
-import AttachmentArea from '@/components/AttachmentArea'
 import Button from '@/components/Button'
 import { useMessageStore } from '@/store/chat'
 import { useAttachmentStore } from '@/store/attachment'
@@ -40,17 +35,16 @@ import { textStream, simpleTextStream } from '@/utils/textStream'
 import { encodeToken } from '@/utils/signature'
 import type { FileManagerOptions } from '@/utils/FileManager'
 import { fileUpload, imageUpload } from '@/utils/upload'
-import { parseOffice, isOfficeFile } from '@/utils/officeParser'
 import { findOperationById } from '@/utils/plugin'
 import { generateImages, type ImageGenerationRequest } from '@/utils/generateImages'
-import { detectLanguage, formatTime, readFileAsDataURL } from '@/utils/common'
+import { detectLanguage, formatTime, readFileAsDataURL, isOfficeFile, isFullGemini2FlashModel } from '@/utils/common'
 import { cn } from '@/utils'
 import { GEMINI_API_BASE_URL } from '@/constant/urls'
 import { OldVisionModel, OldTextModel } from '@/constant/model'
 import mimeType from '@/constant/attachment'
 import { customAlphabet } from 'nanoid'
 import { isFunction, findIndex, isUndefined, entries, flatten, isEmpty } from 'lodash-es'
-import { type OpenAPIV3_1 } from 'openapi-types'
+import type { OpenAPIV3_1 } from 'openapi-types'
 
 interface AnswerParams {
   messages: Message[]
@@ -70,16 +64,19 @@ const nanoid = customAlphabet('1234567890abcdefghijklmnopqrstuvwxyz', 12)
 const MessageItem = dynamic(() => import('@/components/MessageItem'))
 const ErrorMessageItem = dynamic(() => import('@/components/ErrorMessageItem'))
 const AssistantRecommend = dynamic(() => import('@/components/AssistantRecommend'))
+const SystemInstruction = dynamic(() => import('@/components/SystemInstruction'))
 const Setting = dynamic(() => import('@/components/Setting'))
 const FileUploader = dynamic(() => import('@/components/FileUploader'))
+const AttachmentArea = dynamic(() => import('@/components/AttachmentArea'))
 const PluginList = dynamic(() => import('@/components/PluginList'))
 const ModelSelect = dynamic(() => import('@/components/ModelSelect'))
+const TalkWithVoice = dynamic(() => import('@/components/TalkWithVoice'))
+const MultimodalLive = dynamic(() => import('@/components/MultimodalLive'))
 
 export default function Home() {
   const { t } = useTranslation()
   const { toast } = useToast()
   const { state: sidebarState, toggleSidebar } = useSidebar()
-  const siriWaveRef = useRef<HTMLDivElement>(null)
   const scrollAreaBottomRef = useRef<HTMLDivElement>(null)
   const audioStreamRef = useRef<AudioStream>()
   const edgeSpeechRef = useRef<EdgeSpeech>()
@@ -94,10 +91,7 @@ export default function Home() {
   const chatLayout = useMessageStore((state) => state.chatLayout)
   const files = useAttachmentStore((state) => state.files)
   const model = useSettingStore((state) => state.model)
-  const autoStopRecord = useSettingStore((state) => state.autoStopRecord)
-  const talkMode = useSettingStore((state) => state.talkMode)
   const [textareaHeight, setTextareaHeight] = useState<number>(TEXTAREA_DEFAULT_HEIGHT)
-  const [siriWave, setSiriWave] = useState<SiriWave>()
   const [content, setContent] = useState<string>('')
   const [message, setMessage] = useState<string>('')
   const [thinkingMessage, setThinkingMessage] = useState<string>('')
@@ -110,23 +104,20 @@ export default function Home() {
   const [isThinking, setIsThinking] = useState<boolean>(false)
   const [executingPlugins, setExecutingPlugins] = useState<string[]>([])
   const [enablePlugin, setEnablePlugin] = useState<boolean>(true)
-  const [status, setStatus] = useState<'thinkng' | 'silence' | 'talking'>('silence')
+  const [talkMode, setTalkMode] = useState<'chat' | 'voice'>('chat')
   const conversationTitle = useMemo(() => (title ? title : t('chatAnything')), [title, t])
-  const statusText = useMemo(() => {
-    switch (status) {
-      case 'silence':
-      case 'talking':
-        return ''
-      case 'thinkng':
-      default:
-        return t('status.thinking')
-    }
-  }, [status, t])
+  const [status, setStatus] = useState<'thinkng' | 'silence' | 'talking'>('silence')
+  const canUseMultimodalLive = useMemo(() => {
+    return model.startsWith('gemini-2.0-flash-exp')
+  }, [model])
   const isOldVisionModel = useMemo(() => {
     return OldVisionModel.includes(model)
   }, [model])
   const isThinkingModel = useMemo(() => {
-    return model.includes('-thinking')
+    return model.includes('thinking')
+  }, [model])
+  const isLiteModel = useMemo(() => {
+    return model.includes('lite')
   }, [model])
   const supportAttachment = useMemo(() => {
     return !OldTextModel.includes(model)
@@ -155,20 +146,17 @@ export default function Home() {
             })
             if (voice) {
               const audio = await voice.arrayBuffer()
-              setStatus('talking')
-              const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
-              siriWave?.setSpeed(isSafari ? 0.1 : 0.05)
-              siriWave?.setAmplitude(2)
               audioStreamRef.current?.play({
                 audioData: audio,
                 text: content,
                 onStart: (text) => {
+                  setStatus('talking')
                   setSubtitle(text)
                 },
                 onFinished: () => {
                   setStatus('silence')
-                  siriWave?.setSpeed(0.04)
-                  siriWave?.setAmplitude(0.1)
+                  const { autoStartRecord } = useSettingStore.getState()
+                  if (autoStartRecord) audioRecordRef.current?.start()
                 },
               })
               resolve(true)
@@ -176,7 +164,7 @@ export default function Home() {
           }),
       )
     },
-    [siriWave, speechSilence],
+    [speechSilence],
   )
 
   const scrollToBottom = useCallback(() => {
@@ -202,7 +190,7 @@ export default function Home() {
       if (talkMode === 'voice') {
         config.systemInstruction = `${getVoiceModelPrompt()}\n\n${systemInstruction}`
       }
-      if (tools.length > 0 && !isThinkingModel) config.tools = [{ functionDeclarations: tools }]
+      if (tools.length > 0 && !isThinkingModel && !isLiteModel) config.tools = [{ functionDeclarations: tools }]
       if (apiKey !== '') {
         config.baseUrl = apiProxy || GEMINI_API_BASE_URL
       } else {
@@ -298,7 +286,7 @@ export default function Home() {
         }
       }
     },
-    [systemInstruction, isThinkingModel, talkMode],
+    [systemInstruction, isThinkingModel, isLiteModel, talkMode],
   )
 
   const summarize = useCallback(
@@ -335,7 +323,7 @@ export default function Home() {
       thoughtReadableStream: ReadableStream,
       groundingSearchReadableStream: ReadableStream,
     ) => {
-      const { lang, talkMode, maxHistoryLength } = useSettingStore.getState()
+      const { lang, maxHistoryLength } = useSettingStore.getState()
       const { summary, add: addMessage } = useMessageStore.getState()
       speechQueue.current = new PromiseQueue()
       setSpeechSilence(false)
@@ -403,7 +391,7 @@ export default function Home() {
         },
       })
     },
-    [speech, summarize, setThinkingMessage],
+    [speech, summarize, setThinkingMessage, talkMode],
   )
 
   const handleFunctionCall = useCallback(
@@ -560,16 +548,6 @@ export default function Home() {
     [fetchAnswer, handleResponse, handleError, executingPlugins],
   )
 
-  // const handleGroundingSearch = useCallback((groundingMetadata: GroundingMetadata) => {
-  //   const { messages, update: updateMessage } = useMessageStore.getState()
-  //   const currentModelMessageIndex = findLastIndex(messages, { role: 'model' })
-  //   console.log(currentModelMessageIndex)
-  //   if (currentModelMessageIndex > -1) {
-  //     const currentModelMessage = messages[currentModelMessageIndex]
-  //     updateMessage(currentModelMessage.id, { ...currentModelMessage, groundingMetadata })
-  //   }
-  // }, [])
-
   const checkAccessStatus = useCallback(() => {
     const { password, apiKey } = useSettingStore.getState()
     const { isProtected, buildMode } = useEnvStore.getState()
@@ -587,7 +565,7 @@ export default function Home() {
     async (text: string): Promise<void> => {
       if (!checkAccessStatus()) return
       if (text === '') return
-      const { talkMode, model } = useSettingStore.getState()
+      const { model } = useSettingStore.getState()
       const { files, clear: clearAttachment } = useAttachmentStore.getState()
       const { summary, add: addMessage } = useMessageStore.getState()
       const messagePart: Message['parts'] = []
@@ -667,7 +645,16 @@ export default function Home() {
         onError: handleError,
       })
     },
-    [isOldVisionModel, fetchAnswer, handleResponse, handleFunctionCall, handleError, checkAccessStatus, scrollToBottom],
+    [
+      isOldVisionModel,
+      fetchAnswer,
+      talkMode,
+      handleResponse,
+      handleFunctionCall,
+      handleError,
+      checkAccessStatus,
+      scrollToBottom,
+    ],
   )
 
   const handleResubmit = useCallback(
@@ -714,16 +701,12 @@ export default function Home() {
     })
   }, [toast, t])
 
-  const updateTalkMode = useCallback((type: 'chat' | 'voice') => {
-    const { update } = useSettingStore.getState()
-    update({ talkMode: type })
-  }, [])
-
   const handleRecorder = useCallback(() => {
     if (!checkAccessStatus()) return false
     if (!audioStreamRef.current) {
       audioStreamRef.current = new AudioStream()
     }
+    const { autoStopRecord } = useSettingStore.getState()
     if (!audioRecordRef.current || audioRecordRef.current.autoStop !== autoStopRecord) {
       audioRecordRef.current = new AudioRecorder({
         autoStop: autoStopRecord,
@@ -749,7 +732,7 @@ export default function Home() {
         audioRecordRef.current.start()
       }
     }
-  }, [autoStopRecord, checkAccessStatus, handleSubmit])
+  }, [checkAccessStatus, handleSubmit])
 
   const handleStopTalking = useCallback(() => {
     setSpeechSilence(true)
@@ -775,14 +758,13 @@ export default function Home() {
       if (!supportAttachment) return false
       if (!checkAccessStatus()) return false
 
-      const fileList: File[] = []
-
       if (files) {
         const fileList: File[] = []
         for (let i = 0; i < files.length; i++) {
           const file = files[i]
           if (mimeType.includes(file.type)) {
             if (isOfficeFile(file.type)) {
+              const { parseOffice } = await import('@/utils/officeParser')
               const newFile = await parseOffice(file, { type: 'file' })
               if (newFile instanceof File) fileList.push(newFile)
             } else {
@@ -885,34 +867,12 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    let instance: SiriWave
-    if (talkMode === 'voice') {
-      instance = new SiriWave({
-        container: siriWaveRef.current!,
-        style: 'ios9',
-        speed: 0.04,
-        amplitude: 0.1,
-        width: window.innerWidth,
-        height: window.innerHeight / 5,
-      })
-      setSiriWave(instance)
-      setStatus('silence')
-    }
-
-    return () => {
-      if (talkMode === 'voice' && instance) {
-        instance.dispose()
-      }
-    }
-  }, [talkMode])
-
-  useEffect(() => {
-    if (isOldVisionModel || isThinkingModel) {
+    if (isOldVisionModel || isThinkingModel || isLiteModel) {
       setEnablePlugin(false)
     } else {
       setEnablePlugin(true)
     }
-  }, [isOldVisionModel, isThinkingModel])
+  }, [isOldVisionModel, isThinkingModel, isLiteModel])
 
   useLayoutEffect(() => {
     const setting = useSettingStore.getState()
@@ -1145,7 +1105,7 @@ export default function Home() {
               title={t('voiceMode')}
               variant="secondary"
               size="icon"
-              onClick={() => updateTalkMode('voice')}
+              onClick={() => setTalkMode('voice')}
             >
               <AudioLines />
             </Button>
@@ -1163,65 +1123,24 @@ export default function Home() {
           )}
         </div>
       </div>
-      <div style={{ display: talkMode === 'voice' ? 'block' : 'none' }}>
-        <div className="fixed left-0 right-0 top-0 z-50 flex h-full w-screen flex-col items-center justify-center bg-slate-900">
-          <div className="h-1/5 w-full" ref={siriWaveRef}></div>
-          <div className="absolute bottom-0 flex h-2/5 w-2/3 flex-col justify-between pb-12 text-center">
-            <div className="text-sm leading-6">
-              <div className="animate-pulse text-lg text-white">{statusText}</div>
-              {errorMessage !== '' ? (
-                <div className="whitespace-pre-wrap text-center font-semibold text-red-500">{errorMessage}</div>
-              ) : status === 'talking' ? (
-                <div className="whitespace-pre-wrap text-center text-red-300">{subtitle}</div>
-              ) : (
-                <div className="whitespace-pre-wrap text-center text-green-300">{content}</div>
-              )}
-            </div>
-            <div className="flex items-center justify-center pt-2">
-              <Button
-                className="h-10 w-10 rounded-full text-slate-700 dark:text-slate-500 [&_svg]:size-5"
-                title={t('chatMode')}
-                variant="secondary"
-                size="icon"
-                onClick={() => updateTalkMode('chat')}
-              >
-                <MessageSquareText />
-              </Button>
-              {status === 'talking' ? (
-                <Button
-                  className="mx-6 h-14 w-14 rounded-full [&_svg]:size-8"
-                  title={t('stopTalking')}
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => handleStopTalking()}
-                >
-                  <Pause />
-                </Button>
-              ) : (
-                <Button
-                  className="mx-6 h-14 w-14 rounded-full font-mono [&_svg]:size-8"
-                  title={t('startRecording')}
-                  variant="destructive"
-                  size="icon"
-                  disabled={status === 'thinkng'}
-                  onClick={() => handleRecorder()}
-                >
-                  {isRecording ? formatTime(recordTime) : <Mic className="h-8 w-8" />}
-                </Button>
-              )}
-              <Button
-                className="h-10 w-10 rounded-full text-slate-700 dark:text-slate-500 [&_svg]:size-5"
-                title={t('setting')}
-                variant="secondary"
-                size="icon"
-                onClick={() => setSetingOpen(true)}
-              >
-                <Settings />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {talkMode === 'voice' ? (
+        canUseMultimodalLive ? (
+          <MultimodalLive onClose={() => setTalkMode('chat')} />
+        ) : (
+          <TalkWithVoice
+            status={status}
+            content={content}
+            subtitle={subtitle}
+            errorMessage={errorMessage}
+            recordTime={recordTime}
+            isRecording={isRecording}
+            onRecorder={handleRecorder}
+            onStop={handleStopTalking}
+            onClose={() => setTalkMode('chat')}
+            openSetting={() => setSetingOpen(true)}
+          />
+        )
+      ) : null}
       <Setting open={settingOpen} hiddenTalkPanel={!supportSpeechRecognition} onClose={() => setSetingOpen(false)} />
     </main>
   )

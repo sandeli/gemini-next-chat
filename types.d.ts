@@ -32,6 +32,7 @@ declare global {
     temperature: number
     maxOutputTokens: number
     safety: 'none' | 'low' | 'middle' | 'high'
+    autoStartRecord: boolean
     autoStopRecord: boolean
     sidebarState: 'expanded' | 'collapsed'
   }

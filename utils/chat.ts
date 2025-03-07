@@ -57,10 +57,7 @@ export function getSafetySettings(level: string) {
 }
 
 function canUseSearchAsTool(model: string) {
-  if (model.startsWith('gemini-2.0-flash') || model.startsWith('gemini-2.0-pro')) {
-    if (model.includes('lite') || model.includes('thinking')) return false
-    return true
-  }
+  return model.startsWith('gemini-2.0') && !model.includes('lite') && !model.includes('thinking')
 }
 
 export default async function chat({

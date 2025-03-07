@@ -269,7 +269,7 @@ function AssistantMarket(props: AssistantProps) {
         </TabsList>
         <TabsContent value="list">
           <div className="flex gap-2 pb-2 pt-1">
-            <Select defaultValue="all" onValueChange={handleSelectTag} onOpenChange={handleTagListOpenChange}>
+            <Select value="all" onValueChange={handleSelectTag} onOpenChange={handleTagListOpenChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder={t('selectCategory')} />
               </SelectTrigger>

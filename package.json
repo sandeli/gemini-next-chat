@@ -1,6 +1,6 @@
 {
   "name": "gemini-next-chat",
-  "version": "1.8.1",
+  "version": "1.9.1",
   "private": true,
   "author": "Amery2010 <amery@xiangfa.org>",
   "license": "MIT",
@@ -44,6 +44,7 @@
     "clsx": "^2.1.1",
     "copy-to-clipboard": "^3.3.3",
     "dayjs": "^1.11.13",
+    "eventemitter3": "^5.0.1",
     "fix-webm-duration": "^1.0.5",
     "html-to-text": "^9.0.5",
     "i18next": "^23.11.5",
